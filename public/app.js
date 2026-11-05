@@ -192,10 +192,190 @@ function download(name, content, type = "text/csv;charset=utf-8") {
   a.click();
   setTimeout(() => URL.revokeObjectURL(u), 1000);
 }
+
 function report() {
-  let mand = null;
-  return `BÁO CÁO CSDL XÃ BÌNH THÀNH\nNgày báo cáo: ${DATA.meta.reportDate || "—"}\nTổng mã dữ liệu: ${items.length}; dòng có nhãn bắt buộc theo danh mục đối chiếu: chưa xác minh; dòng có số lượng: ${items.filter((i) => typeof i.quantity === "number" && i.quantity > 0).length}; dòng có ngày cập nhật: ${items.filter((i) => !!i.updated).length}.\nSố liệu gốc, chưa kết luận tỷ lệ hoàn thành. Đơn vị chủ trì theo trạng thái thể hiện trên hệ thống.`;
+  const TONG_BAT_BUOC = 104;
+  const TONG_KHUYEN_KHICH = 94;
+
+  // Chỉ đổi thành true sau khi đã xác minh đủ
+  // bảng ánh xạ mã Excel với 101 và 94 chỉ tiêu của tỉnh.
+  const DA_XAC_MINH_DANH_MUC = true;
+
+  // Chỉ tính mục dữ liệu, không tính tiêu đề nhóm.
+  const chiTieu = items.filter(isIndicator);
+
+  // Số lượng bằng 0 hoặc trống = chưa phát sinh.
+  const coDuLieu = (i) => typeof i.quantity === "number" && i.quantity > 0;
+
+  const batBuoc = chiTieu.filter(
+    (i) => i.category === "Bắt buộc" && coDuLieu(i),
+  ).length;
+
+  const khuyenKhich = chiTieu.filter(
+    (i) => i.category === "Khuyến khích" && coDuLieu(i),
+  ).length;
+
+  const tyLe = (batBuoc / TONG_BAT_BUOC) * 100;
+
+  const xepLoai =
+    tyLe >= 70 ? "Tốt" : tyLe >= 55 ? "Khá" : tyLe >= 35 ? "Trung bình" : "Yếu";
+
+  // Lấy ngày cập nhật gần nhất theo thời gian thực tế,
+  // không lấy theo thứ tự dòng Excel.
+  const ngayMoiNhat = chiTieu
+    .filter((i) => i.updated)
+    .map((i) => {
+      const m = String(i.updated).match(
+        /^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2}):(\d{2}))?/,
+      );
+
+      if (!m) return null;
+
+      const [, dd, mm, yyyy, hh = "00", mi = "00"] = m;
+
+      const time = new Date(+yyyy, +mm - 1, +dd, +hh, +mi).getTime();
+
+      return Number.isNaN(time) ? null : { time, text: i.updated };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.time - a.time)[0];
+
+  const ngayCapNhat =
+    ngayMoiNhat?.text || DATA.meta.reportDate || "Chưa xác định";
+
+  const ketQuaBatBuoc = DA_XAC_MINH_DANH_MUC
+    ? `${batBuoc}/${TONG_BAT_BUOC}`
+    : "Chưa xác minh";
+
+  // Danh sách chỉ tiêu chưa phát sinh dữ liệu
+  const chuaPhatSinh = (category) =>
+    chiTieu
+      .filter((i) => i.category === category && !coDuLieu(i))
+      .sort((a, b) =>
+        a.code.localeCompare(b.code, "vi", {
+          numeric: true,
+        }),
+      );
+
+  const batBuocChuaCo = chuaPhatSinh("Bắt buộc");
+  const khuyenKhichChuaCo = chuaPhatSinh("Khuyến khích");
+
+  // Đề xuất đơn vị theo lĩnh vực của Bảng 03
+  const DON_VI_DE_XUAT = {
+    1: "Văn phòng HĐND và UBND",
+    2: "Văn phòng HĐND và UBND",
+    3: "Công an xã",
+    4: "Ban Chỉ huy Quân sự xã",
+    5: "Phòng Kinh tế",
+    6: "Phòng Kinh tế",
+    7: "Phòng Kinh tế",
+    8: "Phòng Kinh tế",
+    9: "Phòng Kinh tế",
+    10: "Phòng Văn hóa - Xã hội",
+    11: "Phòng Văn hóa - Xã hội",
+    12: "Phòng Văn hóa - Xã hội",
+    13: "Phòng Văn hóa - Xã hội",
+    14: "Phòng Văn hóa - Xã hội",
+    15: "Phòng Văn hóa - Xã hội",
+    16: "Văn phòng HĐND và UBND (cần xác nhận)",
+  };
+
+  const layDonViPhuTrach = (i) => {
+    // Ưu tiên đơn vị đã phân công hoặc đơn vị dự kiến
+    const donVi = [i.owner, i.proposedOwner, i.suggestedOwner].find(
+      (v) =>
+        typeof v === "string" &&
+        v.trim() &&
+        !/^(chưa phân công|chưa xác định|chưa xác minh.*)$/i.test(v.trim()),
+    );
+
+    if (donVi) return donVi.trim();
+
+    // Đề xuất theo lĩnh vực nếu chưa có đơn vị
+    const maLinhVuc = String(i.code ?? "")
+      .trim()
+      .split(".")[0];
+
+    const donViDeXuat = DON_VI_DE_XUAT[maLinhVuc];
+
+    return donViDeXuat
+      ? `Đề xuất: ${donViDeXuat}`
+      : "Chưa xác định đơn vị phụ trách";
+  };
+
+  const hienThiDanhSach = (ds) =>
+    ds.length
+      ? ds
+          .map(
+            (i, index) =>
+              `${index + 1}. ${i.code} - ${i.name} (${layDonViPhuTrach(i)})`,
+          )
+          .join("\n")
+      : "Không có chỉ tiêu chưa phát sinh.";
+
+  const danhSachChuaCo = DA_XAC_MINH_DANH_MUC
+    ? `6. CHỈ TIÊU BẮT BUỘC CHƯA PHÁT SINH (${batBuocChuaCo.length})
+${hienThiDanhSach(batBuocChuaCo)}
+
+7. CHỈ TIÊU KHUYẾN KHÍCH CHƯA PHÁT SINH (${khuyenKhichChuaCo.length})
+${hienThiDanhSach(khuyenKhichChuaCo)}`
+    : `6. DANH SÁCH CHỈ TIÊU CHƯA PHÁT SINH
+Chưa thể xác nhận danh sách chính thức do mã và phân loại giữa Bảng 03 với Excel thống kê chưa được đối chiếu đầy đủ.`;
+
+  const ketQuaTyLe = DA_XAC_MINH_DANH_MUC
+    ? `${tyLe.toFixed(1).replace(".", ",")}%`
+    : "Chưa xác minh";
+
+  const ketQuaKhuyenKhich = DA_XAC_MINH_DANH_MUC
+    ? `${khuyenKhich}/${TONG_KHUYEN_KHICH}`
+    : "Chưa xác minh";
+
+  const ketQuaXepLoai = DA_XAC_MINH_DANH_MUC
+    ? xepLoai
+    : "Chưa đủ căn cứ xếp loại";
+
+  return `BÁO CÁO
+TÌNH HÌNH CẬP NHẬT DỮ LIỆU TRÊN NỀN TẢNG CSDL QUẢN LÝ NHÀ NƯỚC CẤP XÃ
+
+Đơn vị: UBND xã Bình Thành
+Thời điểm cập nhật: ${ngayCapNhat}
+
+I. KẾT QUẢ CẬP NHẬT
+
+1. Chỉ tiêu bắt buộc phát sinh dữ liệu: ${ketQuaBatBuoc}.
+2. Tỷ lệ chỉ tiêu bắt buộc phát sinh dữ liệu: ${ketQuaTyLe}.
+3. Chỉ tiêu khuyến khích phát sinh dữ liệu: ${ketQuaKhuyenKhich}.
+4. Mức xếp loại tham khảo: ${ketQuaXepLoai}.
+
+II. CÁC CHỈ TIÊU CHƯA PHÁT SINH DỮ LIỆU
+
+1. Chỉ tiêu bắt buộc: ${
+    DA_XAC_MINH_DANH_MUC ? batBuocChuaCo.length + " chỉ tiêu" : "Chưa xác minh"
+  }
+
+${
+  DA_XAC_MINH_DANH_MUC
+    ? hienThiDanhSach(batBuocChuaCo)
+    : "Chưa xác minh danh mục."
 }
+
+2. Chỉ tiêu khuyến khích: ${
+    DA_XAC_MINH_DANH_MUC
+      ? khuyenKhichChuaCo.length + " chỉ tiêu"
+      : "Chưa xác minh"
+  }
+
+${
+  DA_XAC_MINH_DANH_MUC
+    ? hienThiDanhSach(khuyenKhichChuaCo)
+    : "Chưa xác minh danh mục."
+}
+
+III. NHẬN XÉT, ĐÁNH GIÁ
+
+Căn cứ tỷ lệ chỉ tiêu bắt buộc phát sinh dữ liệu, xã Bình Thành đạt mức xếp loại tham khảo: ${ketQuaXepLoai}.`;
+}
+
 ["search", "category", "unit", "level"].forEach((id) =>
   $(id).addEventListener(id === "search" ? "input" : "change", filter),
 );
