@@ -1,0 +1,1 @@
+{"name":"csdl-binh-thanh","version":"1.0.0","private":true,"description":"Website báo cáo CSDL xã Bình Thành - Node.js và SQLite, không cần npm install","scripts":{"start":"node server.js"},"engines":{"node":">=22.13.0"}}

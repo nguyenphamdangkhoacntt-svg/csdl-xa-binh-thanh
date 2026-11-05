@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>CSDL xã Bình Thành | Theo dõi cập nhật dữ liệu</title>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --ink: #172b46;
+        --muted: #64748b;
+        --line: #e0e7ef;
+        --brand: #1556b5;
+        --brand2: #0d3c82;
+        --white: #fff;
+        --amber: #9a5708;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font:
+          14px/1.5 system-ui,
+          -apple-system,
+          "Segoe UI",
+          Arial,
+          sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      header {
+        background: linear-gradient(105deg, #103368, #1556a3 70%, #1974ae);
+        color: white;
+        padding: 26px max(20px, calc((100vw - 1260px) / 2));
+      }
+      header small {
+        opacity: 0.85;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+      header h1 {
+        font-size: 27px;
+        margin: 5px 0 3px;
+        letter-spacing: -0.02em;
+      }
+      header p {
+        margin: 0;
+        opacity: 0.84;
+      }
+      main {
+        max-width: 1300px;
+        margin: auto;
+        padding: 22px 20px 60px;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .topbar .hint {
+        color: var(--muted);
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        border: 1px solid var(--line);
+        background: white;
+        color: var(--ink);
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-weight: 650;
+      }
+      .btn:hover {
+        border-color: #95aed3;
+      }
+      .btn.primary {
+        background: var(--brand);
+        color: white;
+        border-color: var(--brand);
+      }
+      .btn.primary:hover {
+        background: var(--brand2);
+      }
+      .btn.small {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin: 18px 0;
+      }
+      .card {
+        background: white;
+        border: 1px solid var(--line);
+        padding: 18px;
+        border-radius: 14px;
+        box-shadow: 0 2px 14px #1b395308;
+      }
+      .card .label {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .card .value {
+        font-size: 29px;
+        font-weight: 760;
+        letter-spacing: -0.03em;
+        margin-top: 5px;
+      }
+      .card .sub {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .notice {
+        border: 1px solid #e6d9b9;
+        background: #fffaf0;
+        color: #744b16;
+        padding: 12px 16px;
+        border-radius: 10px;
+        margin: 16px 0;
+      }
+      .notice strong {
+        color: #75440a;
+      }
+      .panel {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 3px 20px #233e5608;
+      }
+      .panel-head {
+        padding: 18px 18px 10px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .panel-head h2 {
+        font-size: 17px;
+        margin: 0;
+      }
+      .filterrow {
+        display: grid;
+        grid-template-columns: minmax(210px, 2fr) repeat(3, minmax(150px, 1fr));
+        gap: 9px;
+        padding: 8px 18px 18px;
+      }
+      .field {
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        min-width: 0;
+        background: #fff;
+        color: var(--ink);
+      }
+      .table-scroll {
+        overflow: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 970px;
+      }
+      th {
+        background: #f6f8fc;
+        color: #62738a;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        font-size: 11px;
+        text-align: left;
+        position: sticky;
+        top: 0;
+      }
+      td,
+      th {
+        padding: 11px 13px;
+        border-bottom: 1px solid #edf1f5;
+        vertical-align: middle;
+      }
+      td.num {
+        text-align: right;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+      }
+      tr.group td {
+        font-weight: 750;
+        background: #f7f9fd;
+      }
+      tr:hover td {
+        background: #f5faff;
+      }
+      .code {
+        font-variant-numeric: tabular-nums;
+        color: #4d6689;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .name {
+        min-width: 200px;
+      }
+      .pill {
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 999px;
+        white-space: nowrap;
+        background: #eef2f6;
+        color: #55677d;
+      }
+      .pill.b {
+        background: #e9f1ff;
+        color: #1b55aa;
+      }
+      .pill.k {
+        background: #eaf8ed;
+        color: #247345;
+      }
+      .pill.x {
+        background: #f3eefd;
+        color: #6a47a8;
+      }
+      .pill.t {
+        background: #edf2f5;
+        color: #586c7b;
+      }
+      .dim {
+        color: #8a97a7;
+      }
+      .owner {
+        font-size: 12px;
+        max-width: 220px;
+      }
+      .owner em {
+        display: block;
+        color: #a06612;
+        font-style: normal;
+        font-size: 11px;
+      }
+      .foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 13px 18px;
+        color: var(--muted);
+        font-size: 12px;
+        flex-wrap: wrap;
+      }
+      .sidebar {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr;
+        gap: 14px;
+        margin-top: 17px;
+      }
+      .sidebar h3 {
+        font-size: 15px;
+        margin: 0 0 8px;
+      }
+      .help p {
+        color: #52657d;
+        margin: 6px 0;
+      }
+      .help {
+        padding: 18px;
+      }
+      .bar {
+        height: 9px;
+        background: #eef3f8;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-top: 7px;
+      }
+      .fill {
+        height: 100%;
+        background: #3e87d7;
+      }
+      .unitrow {
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+        margin: 12px 0 0;
+        font-size: 12px;
+      }
+      .unitrow b {
+        font-variant-numeric: tabular-nums;
+      }
+      .modal-back {
+        position: fixed;
+        inset: 0;
+        background: #142843b3;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 100;
+      }
+      .modal-back.show {
+        display: flex;
+      }
+      .modal {
+        background: white;
+        border-radius: 16px;
+        padding: 22px;
+        max-width: 600px;
+        width: 100%;
+        max-height: 90vh;
+        overflow: auto;
+        box-shadow: 0 20px 90px #09172f66;
+      }
+      .modal h2 {
+        margin: 0 0 5px;
+      }
+      .modal .hint {
+        color: var(--muted);
+      }
+      .modal label {
+        display: block;
+        margin: 14px 0 5px;
+        font-weight: 650;
+      }
+      .modal input,
+      .modal select,
+      .modal textarea {
+        width: 100%;
+      }
+      .modal textarea {
+        min-height: 75px;
+        resize: vertical;
+      }
+      .modal .buttons {
+        display: flex;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 18px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      #toast {
+        position: fixed;
+        right: 20px;
+        bottom: 18px;
+        background: #193f72;
+        color: white;
+        padding: 10px 18px;
+        border-radius: 10px;
+        display: none;
+        z-index: 200;
+        max-width: 90vw;
+      }
+      .legend {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 8px;
+      }
+      @media (max-width: 900px) {
+        .cards {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .filterrow {
+          grid-template-columns: 1fr 1fr;
+        }
+        .sidebar {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media (max-width: 560px) {
+        header h1 {
+          font-size: 22px;
+        }
+        .cards {
+          gap: 8px;
+        }
+        .card {
+          padding: 13px;
+        }
+        .card .value {
+          font-size: 24px;
+        }
+        .filterrow {
+          grid-template-columns: 1fr;
+        }
+        .panel-head,
+        .foot {
+          padding-left: 12px;
+          padding-right: 12px;
+        }
+        .filterrow {
+          padding-left: 12px;
+          padding-right: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <small>Ủy ban nhân dân xã Bình Thành · Tây Ninh</small>
+      <h1>Theo dõi cập nhật cơ sở dữ liệu cấp xã</h1>
+      <p>
+        Báo cáo số lượng và thời gian cập nhật
+      </p>
+    </header>
+    <main>
+      <div class="topbar">
+        <div class="hint" id="sourceInfo">Đang đọc dữ liệu...</div>
+        <div class="actions">
+          <button class="btn" id="copyBtn">Sao chép báo cáo</button
+          ><button class="btn" id="exportCsvBtn">Xuất CSV đã lọc</button
+          ><button class="btn primary" id="adminBtn">
+            Quản trị / Import Excel
+          </button>
+        </div>
+      </div>
+      <div class="cards">
+        <div class="card">
+          <div class="label">Mã dữ liệu trong file</div>
+          <div class="value" id="total">—</div>
+        </div>
+        <div class="card">
+          <div class="label">Dòng có nhãn bắt buộc</div>
+          <div class="value" id="required">—</div>
+        </div>
+        <div class="card">  
+          <div class="label">Số lượng dữ liệu cũ:</div>
+          <div class="value" id="oldDataCount">—</div>
+        </div>
+        <div class="card">
+          <div class="label">Số lượng dữ liệu mới:</div>
+          <div class="value" id="newDataCount">—</div>
+        </div>
+      </div>
+      <div class="notice">
+        <strong>Chú ý khi sử dụng:</strong> Đơn vị chủ trì hiện là
+        <strong>đề xuất theo chức năng, nhiệm vụ</strong>.
+      </div>
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Danh mục dữ liệu xã Bình Thành</h2>
+          <span class="hint" id="resultCount"></span>
+        </div>
+        <div class="filterrow">
+          <input
+            class="field"
+            id="search"
+            placeholder="Tìm mã STT hoặc tên chỉ tiêu..."
+            aria-label="Tìm chỉ tiêu"
+          /><select class="field" id="category">
+            <option value="">Tất cả phân loại</option>
+            <option>Bắt buộc</option>
+            <option>Khuyến khích</option>
+            <option>Xã khai thác</option>
+            <option>Chức năng thống kê tự động của hệ thống</option>
+            <option value="__none">Chưa phân loại / nhóm</option></select
+          ><select class="field" id="unit">
+            <option value="">Tất cả đơn vị</option></select
+          ><select class="field" id="level">
+            <option value="leaf">Chỉ hiển thị chỉ tiêu cuối nhánh</option>
+            <option value="all">Tất cả mã (bao gồm nhóm)</option>
+            <option value="number">Có số lượng</option>
+          </select>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Mã STT</th>
+                <th>Tên dữ liệu</th>
+                <th>Phân loại</th>
+                <th>Đơn vị phụ trách (đề xuất / đã import)</th>
+                <th style="text-align: right">Số lượng xã</th>
+                <th>Ngày cập nhật</th>
+                <th>Chi tiết</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <div class="foot">
+          <span id="pageLabel"></span>
+          <div class="actions">
+            <button class="btn small" id="prev">Trang trước</button
+            ><button class="btn small" id="next">Trang sau</button>
+          </div>
+        </div>
+      </section>
+      <div class="sidebar">
+        <section class="panel help">
+          <h3>Phân bố theo đơn vị (chỉ tiêu cuối nhánh)</h3>
+          <div id="unitsSummary"></div>
+        </section>
+        <section class="panel help">
+          <h3>Hướng dẫn cập nhật báo cáo</h3>
+          <p>
+            <b>1.</b> Người quản trị chọn <b>Quản trị / Import Excel</b>, nhập
+            file đúng mẫu 6 cột (A–F) của tỉnh.
+          </p>
+          <p>
+            <b>2.</b> Kiểm tra các mã STT, số lượng, ngày cập nhật và bảng đơn
+            vị phụ trách.
+          </p>
+          <p>
+            <b>3.</b> Dữ liệu được lưu ngay trên máy chủ. Người xem tải lại
+            trang hoặc chờ website tự làm mới để thấy số liệu mới.
+          </p>
+          <p>
+            <b>4.</b> Cập nhật phân công chính thức bằng cách nhập bảng phân
+            công theo mã STT trong mục Quản trị.
+          </p>
+          <p class="legend">
+            File Excel được gửi đến máy chủ Node.js đang chạy trên máy tính của
+            người quản trị. Chỉ công khai số liệu được phép chia sẻ.
+          </p>
+        </section>
+      </div>
+    </main>
+    <div class="modal-back" id="adminModal">
+      <div class="modal">
+        <h2>Quản trị dữ liệu tập trung</h2>
+        <p class="hint">
+          Đăng nhập để nhập Excel lên máy chủ; số liệu sau import hiển thị cho
+          tất cả người xem cùng địa chỉ.
+        </p>
+        <div id="loginBox">
+          <label>Mật khẩu quản trị</label
+          ><input
+            class="field"
+            id="password"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Nhập mật khẩu"
+          />
+          <div class="buttons">
+            <button class="btn primary" id="loginBtn">Đăng nhập</button
+            ><button class="btn" id="closeModal">Đóng</button>
+          </div>
+        </div>
+        <div id="adminBox" class="hidden">
+          <label>1. Import Excel thống kê theo mẫu 1105.xlsx</label
+          ><input class="field" type="file" id="excelFile" accept=".xlsx" />
+          <div class="legend">
+            Cột A: mã STT, B: dữ liệu, C: số lượng xã, D: ngày cập nhật xã. Cột
+            E–F bỏ qua. Dữ liệu phân loại và đơn vị không bị ghi đè.
+          </div>
+          <label>2. Import bảng phân công chính thức (CSV hoặc XLSX)</label
+          ><input
+            class="field"
+            type="file"
+            id="ownerFile"
+            accept=".xlsx,.csv"
+          />
+          <div class="legend">
+            Mã chỉ tiêu | Đơn vị chủ trì | Ghi chú. Hỗ trợ mã nhóm như 12.4 hoặc
+            mã chi tiết. Chỉ import bảng đã được kiểm tra.
+          </div>
+          <div class="buttons">
+            <button class="btn" id="mappingTemplate">Tải mẫu CSV</button
+            ><button class="btn" id="historyBtn">Lịch sử import</button
+            ><button class="btn" id="logoutBtn">Đăng xuất</button
+            ><button class="btn primary" id="closeAdmin">Đóng</button>
+          </div>
+          <p class="legend" id="importMessage">
+            Dữ liệu lưu tại máy chủ trong storage/csdl.sqlite, không còn lưu
+            riêng trên từng trình duyệt.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-back" id="detailModal">
+      <div class="modal">
+        <h2 id="detailName"></h2>
+        <div id="detailContent"></div>
+        <div class="buttons">
+          <button class="btn primary" id="closeDetail">Đóng</button>
+        </div>
+      </div>
+    </div>
+    <div id="toast"></div>
+    <script src="/app.js"></script>
+  </body>
+</html>
