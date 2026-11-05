@@ -106,25 +106,54 @@ function render() {
     .join("");
   filter();
 }
+
 function filter() {
-  let q = $("search").value.trim().toLowerCase(),
-    cat = $("category").value,
-    unit = $("unit").value,
-    lev = $("level").value;
-  filtered = items
-    .filter(isIndicator)
-    .filter(
-      (i) =>
-        (!q ||
-          (i.code + " " + i.name + " " + i.unit).toLowerCase().includes(q)) &&
-        (!cat || (cat === "__none" ? !i.category : i.category === cat)) &&
-        (!unit || i.unit === unit) &&
-        (lev === "all" ||
-          (lev === "leaf" ? leaf(i) : typeof i.quantity === "number")),
-    );
+  const q = $("search").value.trim().toLowerCase();
+  const cat = $("category").value;
+  const unit = $("unit").value;
+  const lev = $("level").value;
+  const dataStatus = $("dataStatusFilter").value;
+
+  filtered = items.filter(isIndicator).filter((i) => {
+    const hasData =
+      typeof i.quantity === "number" &&
+      Number.isFinite(i.quantity) &&
+      i.quantity > 0;
+
+    // Lọc mã hoặc tên chỉ tiêu
+    if (q && !(i.code + " " + i.name + " " + i.unit).toLowerCase().includes(q))
+      return false;
+
+    // Lọc phân loại
+    if (cat && (cat === "__none" ? Boolean(i.category) : i.category !== cat))
+      return false;
+
+    // Lọc đơn vị phụ trách
+    if (unit && i.unit !== unit) return false;
+
+    // Giữ nguyên cách lọc cấp chỉ tiêu hiện tại
+    if (
+      lev !== "all" &&
+      !(lev === "leaf" ? leaf(i) : typeof i.quantity === "number")
+    )
+      return false;
+
+    // Lọc tình trạng phát sinh dữ liệu
+    if (dataStatus === "missing" && hasData) {
+      return false;
+    }
+
+    if (dataStatus === "available" && !hasData) {
+      return false;
+    }
+
+    return true;
+  });
+
   page = 0;
   renderTable();
 }
+
 function renderTable() {
   let start = page * perPage,
     seg = filtered.slice(start, start + perPage);
@@ -376,9 +405,14 @@ III. NHẬN XÉT, ĐÁNH GIÁ
 Căn cứ tỷ lệ chỉ tiêu bắt buộc phát sinh dữ liệu, xã Bình Thành đạt mức xếp loại tham khảo: ${ketQuaXepLoai}.`;
 }
 
-["search", "category", "unit", "level"].forEach((id) =>
-  $(id).addEventListener(id === "search" ? "input" : "change", filter),
+
+["search", "category", "unit", "level", "dataStatusFilter"].forEach((id) =>
+  $(id).addEventListener(
+    id === "search" ? "input" : "change",
+    filter
+  )
 );
+
 $("tbody").addEventListener("click", (e) => {
   let b = e.target.closest("button[data-code]");
   if (b) detail(b.dataset.code);

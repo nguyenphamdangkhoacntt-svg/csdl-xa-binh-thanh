@@ -159,7 +159,7 @@
       }
       .filterrow {
         display: grid;
-        grid-template-columns: minmax(210px, 2fr) repeat(3, minmax(150px, 1fr));
+        grid-template-columns: minmax(210px, 2fr) repeat(4, minmax(140px, 1fr));
         gap: 9px;
         padding: 8px 18px 18px;
       }
@@ -416,9 +416,7 @@
     <header>
       <small>Ủy ban nhân dân xã Bình Thành · Tây Ninh</small>
       <h1>Theo dõi cập nhật cơ sở dữ liệu cấp xã</h1>
-      <p>
-        Báo cáo số lượng và thời gian cập nhật
-      </p>
+      <p>Báo cáo số lượng và thời gian cập nhật</p>
     </header>
     <main>
       <div class="topbar">
@@ -440,7 +438,7 @@
           <div class="label">Dòng có nhãn bắt buộc</div>
           <div class="value" id="required">—</div>
         </div>
-        <div class="card">  
+        <div class="card">
           <div class="label">Số lượng dữ liệu cũ:</div>
           <div class="value" id="oldDataCount">—</div>
         </div>
@@ -477,6 +475,15 @@
             <option value="leaf">Chỉ hiển thị chỉ tiêu cuối nhánh</option>
             <option value="all">Tất cả mã (bao gồm nhóm)</option>
             <option value="number">Có số lượng</option>
+          </select>
+          <select
+            class="field"
+            id="dataStatusFilter"
+            aria-label="Lọc tình trạng dữ liệu"
+          >
+            <option value="all">Tất cả tình trạng dữ liệu</option>
+            <option value="missing">Chưa có dữ liệu</option>
+            <option value="available">Đã có dữ liệu</option>
           </select>
         </div>
         <div class="table-scroll">
